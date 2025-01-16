@@ -4,15 +4,15 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import MergeSortVisualizer from './components/MergeSortVisualizer'
 import BubbleSortVisualizer from './components/BubbleSortVisualizer'
-
+import InsertionSortVisualizer from './components/InsertionSortVisualizer'
+ 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
-      <h1>Mô phỏng thuật toán</h1>
-      <div style={{ width: "70vw", height: "70vh" }}>
-        <BubbleSortVisualizer />
+      <h1>Mô phỏng thuật toán sắp xếp</h1>
+      <div>
+        <InsertionSortVisualizer />
       </div>
     </>
   )
