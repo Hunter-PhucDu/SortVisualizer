@@ -10,6 +10,7 @@ const InsertionSortVisualizer = () => {
   const [minValue, setMinValue] = useState(10);        // Giá trị nhỏ nhất trong mảng
   const [maxValue, setMaxValue] = useState(100);       // Giá trị lớn nhất trong mảng
   const [originalArray, setOriginalArray] = useState([50, 30, 70, 60, 90, 80, 100, 40, 20, 10]);
+  const [arrayInput, setArrayInput] = useState(originalArray.join(", "));
   const [array, setArray] = useState([...originalArray]);
   const [displayArray, setDisplayArray] = useState([...originalArray]);
   const [steps, setSteps] = useState([]);
@@ -18,6 +19,13 @@ const InsertionSortVisualizer = () => {
   const [animating, setAnimating] = useState(false);
   const [message, setMessage] = useState("");
   const [originalPositions, setOriginalPositions] = useState([]);
+  const [colors, setColors] = useState(Array(originalArray.length).fill("#242424"));
+  const [highlightedIndices, setHighlightedIndices] = useState(null);
+  const timeoutRef = useRef(null);
+  const autoRunRef = useRef(autoRun);
+  const [sortedIndices, setSortedIndices] = useState([]);
+  const [initialPositions, setInitialPositions] = useState([]);
+
   const [positions, setPositions] = useState(
     originalArray.map((value, index) => ({
       id: `box-${index}`,
@@ -27,13 +35,6 @@ const InsertionSortVisualizer = () => {
       isCopy: false,
     }))
   );
-  const [colors, setColors] = useState(Array(originalArray.length).fill("#242424"));
-  const [highlightedIndices, setHighlightedIndices] = useState(null);
-  const timeoutRef = useRef(null);
-  const autoRunRef = useRef(autoRun);
-  const [sortedIndices, setSortedIndices] = useState([]);
-
-  const [initialPositions, setInitialPositions] = useState([]);
 
   useEffect(() => {
     resetSimulation();
@@ -50,12 +51,35 @@ const InsertionSortVisualizer = () => {
     }
   }, [originalArray]);
 
+  const handleArrayInputChange = (e) => {
+    setArrayInput(e.target.value);
+  };
+
+  const updateArrayFromInput = () => {
+    try {
+      const newArray = arrayInput
+        .split(",") // Tách chuỗi thành mảng dựa trên dấu phẩy
+        .map((value) => parseInt(value.trim(), 10)) // Loại bỏ khoảng trắng và chuyển sang số nguyên
+        .filter((value) => !isNaN(value)); // Loại bỏ giá trị không hợp lệ
+
+      if (newArray.length === 0) {
+        throw new Error("Mảng không hợp lệ hoặc rỗng.");
+      }
+
+      setOriginalArray(newArray);
+      setMessage("Đã cập nhật mảng thành công.");
+    } catch (error) {
+      setMessage(`Lỗi: ${error.message}`);
+    }
+  };
+
   const generateArray = () => {
     const newArray = [];
     for (let i = 0; i < numElements; i++) {
       newArray.push(Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue);
     }
     setOriginalArray(newArray);
+    setArrayInput(newArray.join(", "));
   };
 
   function insertionSort(array) {
@@ -104,7 +128,6 @@ const InsertionSortVisualizer = () => {
     return steps;
   }
 
-  // edit 1
   const animateStep = async (step) => {
     const newColors = [...colors];
 
@@ -115,8 +138,6 @@ const InsertionSortVisualizer = () => {
 
       // Tạo box bản sao nếu chưa tồn tại
       const newPositions = positions.map((box) => ({ ...box }));
-
-      console.log(`newPositions from select: `, newPositions);
 
       step.indices.forEach((i) => {
         const originalBox = newPositions[i];
@@ -137,11 +158,12 @@ const InsertionSortVisualizer = () => {
       });
 
       setPositions(newPositions);
+
+      console.log(`abc: `, newPositions);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     if (step.type === "compare") {
-      console.log(`compare: ${step.indices}`);
       setHighlightedIndices(step.indices);
       step.indices.forEach((i) => (newColors[i] = "#ff6f61"));
       setColors(newColors);
@@ -188,8 +210,6 @@ const InsertionSortVisualizer = () => {
       setColors(newColors);
     }
 
-
-    // edit 3
     if (step.type === "insert") {
       const [to, from] = step.indices;
       const newPositions = positions.map((box) => ({ ...box }));
@@ -280,6 +300,11 @@ const InsertionSortVisualizer = () => {
     if (currentStep + 1 >= steps.length) {
       setMessage("Sắp xếp xong!");
       setAutoRun(false);
+      setColors((prevColors) => {
+        const newColors = [...prevColors];
+        newColors[0] = "#32cd32";
+        return newColors;
+      });
     }
   };
 
@@ -345,43 +370,59 @@ const InsertionSortVisualizer = () => {
     <>
       <div className="container control-container">
         <div className="array-container">
-          <div className="array-menu">
+          <div className="array-input-container">
             <label>
-              Số phần tử:
+              Nhập mảng:
               <input
-                type="number"
-                value={numElements}
-                onChange={(e) => setNumElements(Number(e.target.value))}
-                min={1}
-                max={50}
+                type="text"
+                value={arrayInput}
+                onChange={handleArrayInputChange}
+                placeholder="Ví dụ: 10, 20, 30, 40"
               />
             </label>
+            <button onClick={updateArrayFromInput}>Cập nhật mảng</button>
           </div>
-          <div className="array-menu">
-            <label>
-              Giá trị nhỏ nhất:
-              <input
-                type="number"
-                value={minValue}
-                onChange={(e) => setMinValue(Number(e.target.value))}
-              />
-            </label>
+          <div className="array-element">
+            <div className="array-input-element">
+              <div className="array-menu">
+                <label>
+                  Số phần tử:
+                  <input
+                    type="number"
+                    value={numElements}
+                    onChange={(e) => setNumElements(Number(e.target.value))}
+                    min={1}
+                    max={50}
+                  />
+                </label>
+              </div>
+              <div className="array-menu">
+                <label>
+                  Giá trị nhỏ nhất:
+                  <input
+                    type="number"
+                    value={minValue}
+                    onChange={(e) => setMinValue(Number(e.target.value))}
+                  />
+                </label>
+              </div>
+              <div className="array-menu">
+                <label>
+                  Giá trị lớn nhất:
+                  <input
+                    type="number"
+                    value={maxValue}
+                    onChange={(e) => setMaxValue(Number(e.target.value))}
+                  />
+                </label>
+              </div>
+            </div>
+            <div className="array-button">
+              <button onClick={generateArray}>Tạo mảng mới</button>
+            </div>
           </div>
-          <div className="array-menu">
-            <label>
-              Giá trị lớn nhất:
-              <input
-                type="number"
-                value={maxValue}
-                onChange={(e) => setMaxValue(Number(e.target.value))}
-              />
-            </label>
-          </div>
-          <button onClick={generateArray}>Tạo mảng mới</button>
         </div>
-
         <div className="menu-container">
-
           <button onClick={resetSimulation}>Reset</button>
           <button onClick={handleStep} disabled={animating}>
             Next Step
@@ -405,6 +446,7 @@ const InsertionSortVisualizer = () => {
           <p style={{ margin: 0 }}>{message}</p>
         </div>
       </div>
+      {console.log(`positions: `, positions)}
       <Canvas orthographic camera={{ zoom: 50, position: [0, 0, 100] }} className="canvas-container">
         <ambientLight intensity={0.5} />
         <OrbitControls
@@ -424,6 +466,14 @@ const InsertionSortVisualizer = () => {
               </Box>
               <Text position={[0, 0, boxSize / 2 + 0.1]} fontSize={boxSize / 2} color="white">
                 {box.value}
+              </Text>
+              <Text
+                position={[0, -boxSize / 2 - 0.2, boxSize / 2]}  // Đẩy chữ lên thêm một chút
+                fontSize={boxSize / 4}
+                color="gold"
+                fontWeight="bold"
+              >
+                {box.isCopy ? box.id.split('copy-box-')[1] : index}
               </Text>
             </group>
           )

@@ -10,7 +10,7 @@ function App() {
 
   return (
     <>
-      <h1>Mô phỏng thuật toán sắp xếp</h1>
+      <h1>Mô phỏng thuật toán sắp xếp chèn (Insertion Sort)</h1>
       <div>
         <InsertionSortVisualizer />
       </div>
